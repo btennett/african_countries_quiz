@@ -1,17 +1,14 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Africa Map Quiz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Find 12 African countries on the map, drawn from all 54. Every game is different.">
 <meta name="theme-color" content="#1F4E8C">
 <!-- Link previews: change og:url / og:image to wherever you host this. og:image must be a full https:// address. -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Africa Map Quiz">
 <meta property="og:description" content="Find 12 African countries on the map, drawn from all 54. Every game is different.">
-<meta property="og:url" content="https://btennett.github.io/africa_countries_quiz/">
-<meta property="og:image" content="https://btennett.github.io/africa_countries_quiz/preview.png">
+<meta property="og:url" content="https://btennett.github.io/africa_map_quiz/">
+<meta property="og:image" content="https://btennett.github.io/africa_map_quiz/preview.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -71,6 +68,8 @@ button{font:inherit;color:inherit}
 .c.sel{fill:var(--sel)}
 .c.ok{fill:var(--good)} .c.no{fill:var(--bad)}
 .c.dim{fill:var(--land);opacity:.55}
+.c.found{fill:color-mix(in srgb,var(--good) 60%,var(--land))}
+.mk.found{stroke:var(--good);stroke-dasharray:none;fill:color-mix(in srgb,var(--good) 30%,transparent)}
 .mk{fill:transparent;stroke:var(--border);stroke-dasharray:3 3;stroke-width:1.2;vector-effect:non-scaling-stroke;cursor:pointer}
 .mk.sel{stroke:var(--sel);stroke-width:2.4;stroke-dasharray:none;fill:color-mix(in srgb,var(--sel) 22%,transparent)}
 .mk.ok{stroke:var(--good);stroke-width:2.4;stroke-dasharray:none;fill:color-mix(in srgb,var(--good) 22%,transparent)}
@@ -114,8 +113,6 @@ button{font:inherit;color:inherit}
 .foot{font-family:var(--f-mono);font-size:.68rem;color:var(--muted);text-align:center;margin:8px 0 0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
-</head>
-<body>
 <!--
 ================================================================
   QUIZ CONTENT — edit this block to change the quiz.
@@ -300,6 +297,7 @@ window.addEventListener("resize", rescale);
 
 // ---------- Game ----------
 let round = [], i = 0, score = 0, answers = [], picked = null, answered = false;
+const found = new Set(); // countries answered correctly this game stay green
 const total = () => round.length;
 
 function setClass(id, cls) {
@@ -307,7 +305,7 @@ function setClass(id, cls) {
   if (markers[id]) markers[id].setAttribute("class", "mk" + (cls ? " " + cls : ""));
 }
 function clearMap() {
-  for (const id in paths) setClass(id, "");
+  for (const id in paths) setClass(id, found.has(id) ? "found" : "");
   fxLayer.innerHTML = "";
 }
 function label(id, text, cls, offset) {
@@ -336,7 +334,7 @@ function show() {
 
 function pick(id) {
   if (answered || !BY_ID[id]) return;
-  if (picked) setClass(picked, "");
+  if (picked) setClass(picked, found.has(picked) ? "found" : "");
   picked = id; setClass(id, "sel");
   buzz(8);
   const b = $("mainBtn"); b.disabled = false; b.textContent = "Confirm ✓";
@@ -345,10 +343,10 @@ function pick(id) {
 function confirmPick() {
   answered = true;
   const x = round[i], ok = picked === x.id;
-  if (ok) score++;
+  if (ok) { score++; found.add(x.id); }
   answers.push({ x, picked, ok });
   buzz(ok ? 20 : [30, 40, 30]);
-  for (const id in paths) setClass(id, id === x.id ? "ok" : id === picked ? "no" : "dim");
+  for (const id in paths) setClass(id, id === x.id ? "ok" : id === picked ? "no" : found.has(id) ? "found" : "dim");
   const [cx, cy] = GEO.countries[x.id].c;
   mk("circle", { cx, cy, class: "ring" }, fxLayer);
   if (!ok) label(picked, BY_ID[picked].country, "no", false);
@@ -381,7 +379,7 @@ function finish() {
 
 function start() {
   round = shuffle(COUNTRIES).slice(0, Math.min(PER, COUNTRIES.length));
-  i = 0; score = 0; answers = [];
+  i = 0; score = 0; answers = []; found.clear();
   $("over").hidden = true; $("play").hidden = false;
   show();
 }
@@ -397,5 +395,5 @@ document.addEventListener("keydown", e => { if (e.key === "Enter" && !$("mainBtn
 $("foot").textContent = `${COUNTRIES.length} countries · v${DATA.version}`;
 start();
 </script>
-</body>
-</html>
+
+</body></html>
